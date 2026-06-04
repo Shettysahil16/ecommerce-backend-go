@@ -3,7 +3,6 @@ package users
 import (
 	services "backend/services/user_service"
 	"context"
-	"log"
 	"net/http"
 	"time"
 
@@ -24,11 +23,11 @@ func AuthUser(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	start := time.Now()
+	//start := time.Now()
 
 	user, err := services.GetUserByID(ctx, userID.(string))
 
-	log.Println("DB query time:", time.Since(start))
+	//log.Println("DB query time:", time.Since(start))
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -38,12 +37,12 @@ func AuthUser(c *gin.Context) {
 		return
 	}
 
-	responseStart := time.Now()
+	//responseStart := time.Now()
 
 	c.JSON(http.StatusOK, gin.H{
 		"user": user,
 	})
 
-	log.Println("Response time:", time.Since(responseStart))
+	//log.Println("Response time:", time.Since(responseStart))
 
 }

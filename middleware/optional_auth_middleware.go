@@ -33,7 +33,7 @@ func OptionalAuthMiddleware() gin.HandlerFunc {
 
 		tokenString := parts[1]
 
-		claims, err := utils.ValidateToken(tokenString)
+		claims, err := utils.ValidateAccessToken(tokenString)
 
 		if err != nil {
 
@@ -45,7 +45,7 @@ func OptionalAuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("userID", claims["user_id"])
+		c.Set("userID", claims.UserID)
 
 		c.Next()
 	}

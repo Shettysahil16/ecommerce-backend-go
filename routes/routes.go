@@ -5,6 +5,7 @@ import (
 	cart "backend/controllers/cart_controller"
 	homepage "backend/controllers/homepage_controller"
 	products "backend/controllers/products_controller"
+	token "backend/controllers/token_controller"
 	users "backend/controllers/users_controller"
 	"backend/middleware"
 
@@ -18,6 +19,7 @@ func AuthRoutes(router *gin.Engine) {
 	{
 		auth.POST("/signup", users.Register)
 		auth.POST("/login", users.Login)
+		auth.POST("/refresh", token.RefreshToken)
 	}
 
 	protected := router.Group("/api/users")

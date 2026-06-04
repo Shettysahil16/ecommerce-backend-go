@@ -25,7 +25,7 @@ func Login(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	token, err := services.LoginUser(ctx, user)
+	accessToken, refreshToken, err := services.LoginUser(ctx, user)
 	if err != nil {
 		c.JSON(401, gin.H{
 			"error": err.Error(),
@@ -34,8 +34,10 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	c.SetCookie("refresh_token", refreshToken, 7*24*60*60, "/", "", false, true)
+
 	c.JSON(200, gin.H{
-		"message": "login successful",
-		"token":   token,
+		"message":     "login successful",
+		"accessToken": accessToken,
 	})
 }

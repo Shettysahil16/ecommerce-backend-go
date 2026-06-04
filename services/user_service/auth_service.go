@@ -34,28 +34,33 @@ func RegisterUser(ctx context.Context, user models.User) error {
 
 }
 
-func LoginUser(ctx context.Context, user models.LoginRequest) (string, error) {
+func LoginUser(ctx context.Context, user models.LoginRequest) (string, string, error) {
 
 	existingUser, err := repositories.FindUserByEmail(ctx, user.Email)
 	if err != nil {
-		return "", errors.New(
+		return "", "", errors.New(
 			"invalid email or password",
 		)
 	}
 
 	passwordValid := utils.CheckPasswordHash(user.Password, existingUser.Password)
 	if !passwordValid {
-		return "", errors.New(
+		return "", "", errors.New(
 			"invalid email or password",
 		)
 	}
 
-	token, err := utils.GenerateToken(existingUser.ID.Hex())
+	accessToken, err := utils.GenerateAcccessToken(existingUser.ID.Hex())
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return token, nil
+	refreshToken, err := utils.GenerateRefreshToken(existingUser.ID.Hex())
+	if err != nil {
+		return "", "", err
+	}
+
+	return accessToken, refreshToken, nil
 }
 
 func GetUserByID(ctx context.Context, userID string) (*models.User, error) {
