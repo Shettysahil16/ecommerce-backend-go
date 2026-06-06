@@ -3,7 +3,6 @@ package address
 import (
 	"backend/models"
 	"backend/repositories"
-	"backend/utils"
 	"context"
 	"errors"
 	"regexp"
@@ -47,17 +46,17 @@ func CreateAddress(ctx context.Context, AddressData models.Address, userID bson.
 	}
 
 	//api for checking the pincode matching district https://api.postalpincode.in/pincode/400001
-	err := utils.ValidatePincodeandLocation(AddressData.Pincode, AddressData.State, AddressData.City)
-	if err != nil {
-		return nil, err
-	}
+	// err := utils.ValidatePincodeandLocation(AddressData.Pincode, AddressData.State, AddressData.City)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	// MOBILE NUMBER CHECKING LOGIC
 	if len(AddressData.Phone) != 10 {
 		return nil, errors.New("invalid mobile number")
 	}
 
-	_, err = strconv.Atoi(AddressData.Phone)
+	_, err := strconv.Atoi(AddressData.Phone)
 	if err != nil {
 		return nil, errors.New("mobile number must contain only digits")
 	}

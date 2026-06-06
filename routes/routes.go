@@ -19,7 +19,9 @@ func AuthRoutes(router *gin.Engine) {
 	{
 		auth.POST("/signup", users.Register)
 		auth.POST("/login", users.Login)
-		auth.POST("/refresh", token.RefreshToken)
+		auth.GET("/refresh", token.RefreshToken)
+		auth.POST("/logout", middleware.AuthMiddleware(), users.SingleSessionLogout)
+		auth.POST("/logout-all-devices", middleware.AuthMiddleware(), users.AllSessionLogout)
 	}
 
 	protected := router.Group("/api/users")

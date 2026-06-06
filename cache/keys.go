@@ -10,3 +10,11 @@ func UserKey(userID string) string {
 func CartKey(userID string) string {
 	return "cart:" + userID
 }
+
+func SessionKey(sessionID string) string {
+	return "session:" + sessionID
+}
+
+func UserSessionsKey(userID string) string {
+	return "user_sessions:" + userID
+}

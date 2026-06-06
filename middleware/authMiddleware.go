@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"backend/cache"
 	"backend/utils"
 	"net/http"
 	"strings"
@@ -28,9 +29,14 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("userID", claims.UserID)
-		//fmt.Println("user in middleware", claims)
+		exists := cache.IsSessionActive(claims.SessionID)
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "session expired"})
+			c.Abort()
+			return
+		}
 
+		c.Set("userID", claims.UserID)
 		c.Next()
 	}
 }

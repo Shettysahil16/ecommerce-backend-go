@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"os"
 	"time"
@@ -9,23 +11,27 @@ import (
 )
 
 type AccessClaims struct {
-	UserID string `json:"userId"`
+	UserID    string `json:"userId"`
+	SessionID string `json:"sessionId"`
 
 	jwt.RegisteredClaims
 }
 
 type RefreshClaims struct {
-	UserID string `json:"userId"`
+	UserID    string `json:"userId"`
+	SessionID string `json:"sessionId"`
 
 	jwt.RegisteredClaims
 }
 
-func GenerateAcccessToken(userID string) (string, error) {
+// ACCESS TOKEN GENERATION AND VALIDATION
+func GenerateAcccessToken(userID string, sessionID string) (string, error) {
 
 	access_secret := os.Getenv("ACCESS_SECRET")
 
 	claims := AccessClaims{
-		UserID: userID,
+		UserID:    userID,
+		SessionID: sessionID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Subject:  userID,
 			IssuedAt: jwt.NewNumericDate(time.Now()),
@@ -38,26 +44,6 @@ func GenerateAcccessToken(userID string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString([]byte(access_secret))
-}
-
-func GenerateRefreshToken(userID string) (string, error) {
-
-	refresh_secret := os.Getenv("REFRESH_SECRET")
-
-	claims := RefreshClaims{
-		UserID: userID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Subject:  userID,
-			IssuedAt: jwt.NewNumericDate(time.Now()),
-			ExpiresAt: jwt.NewNumericDate(
-				time.Now().Add(7 * 24 * time.Hour),
-			),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return token.SignedString([]byte(refresh_secret))
 }
 
 func ValidateAccessToken(tokenString string) (*AccessClaims, error) {
@@ -80,6 +66,28 @@ func ValidateAccessToken(tokenString string) (*AccessClaims, error) {
 	return claims, nil
 }
 
+// REFRESH TOKEN GENERATION AND VALIDATION
+func GenerateRefreshToken(userID string, sessionID string) (string, error) {
+
+	refresh_secret := os.Getenv("REFRESH_SECRET")
+
+	claims := RefreshClaims{
+		UserID:    userID,
+		SessionID: sessionID,
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:  userID,
+			IssuedAt: jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(
+				time.Now().Add(7 * 24 * time.Hour),
+			),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return token.SignedString([]byte(refresh_secret))
+}
+
 func ValidateRefreshToken(tokenString string) (*RefreshClaims, error) {
 	refresh_secret := os.Getenv("REFRESH_SECRET")
 
@@ -100,40 +108,7 @@ func ValidateRefreshToken(tokenString string) (*RefreshClaims, error) {
 	return claims, nil
 }
 
-// func ValidateAccessToken(tokenString string) (jwt.MapClaims, error) {
-// 	secret := os.Getenv("JWT_SECRET")
-
-// 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-
-// 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-// 			return nil, jwt.ErrTokenSignatureInvalid
-// 		}
-// 		return []byte(secret), nil
-// 	})
-// 	//fmt.Print("token inside validate token", token)
-
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	claims, ok := token.Claims.(jwt.MapClaims)
-
-// 	if !ok || !token.Valid {
-// 		return nil, jwt.ErrTokenInvalidClaims
-// 	}
-
-// 	return claims, nil
-// }
-
-// token := &jwt.Token{
-// 	Method: jwt.SigningMethodHS256,
-
-// 	Header: map[string]interface{}{
-// 		"alg": "HS256",
-// 		"typ": "JWT",
-// 	},
-
-// 	Claims: jwt.MapClaims{
-// 		"user_id": 5,
-// 	},
-// }
+func HashToken(token string) string {
+	sum := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(sum[:])
+}

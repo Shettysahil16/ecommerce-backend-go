@@ -1,6 +1,7 @@
 package services
 
 import (
+	"backend/cache"
 	"backend/models"
 	"backend/repositories"
 	"backend/utils"
@@ -8,6 +9,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
@@ -50,12 +52,27 @@ func LoginUser(ctx context.Context, user models.LoginRequest) (string, string, e
 		)
 	}
 
-	accessToken, err := utils.GenerateAcccessToken(existingUser.ID.Hex())
+	sessionID := uuid.NewString()
+
+	accessToken, err := utils.GenerateAcccessToken(existingUser.ID.Hex(), sessionID)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err := utils.GenerateRefreshToken(existingUser.ID.Hex())
+	refreshToken, err := utils.GenerateRefreshToken(existingUser.ID.Hex(), sessionID)
+	if err != nil {
+		return "", "", err
+	}
+
+	hash := utils.HashToken(refreshToken)
+
+	session := models.Session{
+		SessionID:   sessionID,
+		UserID:      existingUser.ID.Hex(),
+		RefreshHash: hash,
+	}
+
+	err = cache.SetSessionCache(ctx, sessionID, session)
 	if err != nil {
 		return "", "", err
 	}
