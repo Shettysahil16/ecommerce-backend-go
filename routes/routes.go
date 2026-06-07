@@ -3,6 +3,7 @@ package routes
 import (
 	address "backend/controllers/address_controller"
 	cart "backend/controllers/cart_controller"
+	checkout "backend/controllers/checkout_controller"
 	homepage "backend/controllers/homepage_controller"
 	products "backend/controllers/products_controller"
 	token "backend/controllers/token_controller"
@@ -66,6 +67,13 @@ func AuthRoutes(router *gin.Engine) {
 		addressapi.PATCH("/update_address/:addressId", address.UpdateAddress)
 		addressapi.GET("/update_address/default/:addressId", address.UpdateDefaultAddress)
 		addressapi.DELETE("/delete_address/:addressId", address.DeleteAddress)
+	}
+
+	// CHECKOUT API
+	checkoutapi := router.Group("/api")
+	checkoutapi.Use(middleware.AuthMiddleware())
+	{
+		checkoutapi.POST("/checkout", checkout.Checkout)
 	}
 
 }
