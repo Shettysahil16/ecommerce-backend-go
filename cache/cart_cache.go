@@ -60,3 +60,16 @@ func DeleteCartItemCache(userID string, productID string) error {
 
 	return config.RedisClient.HDel(config.Ctx, CartKey(userID), productID).Err()
 }
+
+func UpdateCartQuantityCache(userID string, productID string, qty int) (*models.RedisCart, error) {
+
+	newQty, err := config.RedisClient.HSet(config.Ctx, CartKey(userID), productID, int64(qty)).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.RedisCart{
+		ProductID: productID,
+		Quantity:  newQty,
+	}, nil
+}

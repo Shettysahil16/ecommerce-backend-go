@@ -26,7 +26,7 @@ func Checkout(c *gin.Context) {
 		return
 	}
 
-	result, err := checkoutService.CheckoutService(ctx, req, userID, userObjId)
+	result, err := checkoutService.Checkout(ctx, req, userID, userObjId)
 	if err != nil {
 		checkoutService.HandleCheckoutError(c, err)
 		return

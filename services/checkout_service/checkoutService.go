@@ -9,37 +9,41 @@ import (
 	"errors"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"golang.org/x/sync/errgroup"
 )
 
-func CheckoutService(ctx context.Context, req models.CheckoutRequest, userID string, userObjId bson.ObjectID) (*models.CheckoutResponse, error) {
+func Checkout(ctx context.Context, req models.CheckoutRequest, userID string, userObjId bson.ObjectID) (*models.CheckoutResponse, error) {
 
-	var (
-		product *models.Product
-		cart    *models.CartResponse
-		address *models.DefaultAddressResponse
-	)
+	var response *models.CheckoutResponse
 
-	g, ctx := errgroup.WithContext(ctx)
+	// ADDRESS (always required)
+	addressObjId, err := bson.ObjectIDFromHex(req.AddressID)
+	if err != nil {
+		return nil, err
+	}
+
+	address, err := addressService.GetAddress(ctx, addressObjId, userObjId)
+	if err != nil {
+		return nil, err
+	}
+
+	// address = a
+	// return nil
 
 	var ErrCartEmpty = errors.New("cart is empty")
 
 	// PRODUCT OR CART
 	if req.ProductID == "" {
 
-		g.Go(func() error {
-			cartResp, err := cartService.GetCartItems(ctx, userID)
-			if err != nil {
-				return err
-			}
+		cartResp, err := cartService.GetCheckoutCartItems(ctx, userID, *address)
+		if err != nil {
+			return nil, err
+		}
 
-			if len(cartResp.Items) == 0 {
-				return ErrCartEmpty
-			}
+		if len(cartResp.Items) == 0 {
+			return nil, ErrCartEmpty
+		}
 
-			cart = cartResp
-			return nil
-		})
+		response = cartResp
 
 	} else {
 
@@ -48,48 +52,16 @@ func CheckoutService(ctx context.Context, req models.CheckoutRequest, userID str
 			return nil, err
 		}
 
-		g.Go(func() error {
-			p, err := productService.GetProductByID(ctx, productObjId)
-			if err != nil {
-				return err
-			}
-
-			product = p
-			return nil
-		})
-	}
-
-	// ADDRESS (always required)
-	addressObjId, err := bson.ObjectIDFromHex(req.AddressID)
-	if err != nil {
-		return nil, err
-	}
-
-	g.Go(func() error {
-		a, err := addressService.GetAddress(ctx, addressObjId, userObjId)
+		productResp, err := productService.GetCheckoutProduct(ctx, productObjId, req.Quantity, *address)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		address = a
-		return nil
-	})
-
-	err = g.Wait()
-	if err != nil {
-		return nil, err
+		response = productResp
 	}
 
 	// BUILD RESPONSE
-	resp := &models.CheckoutResponse{
-		Cart:    cart,
-		Address: address,
-	}
 
-	if product != nil {
-		resp.Product = []*models.Product{product}
-		resp.TotalPrice = product.SellingPrice
-	}
+	return response, nil
 
-	return resp, nil
 }

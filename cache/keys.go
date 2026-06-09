@@ -18,3 +18,7 @@ func SessionKey(sessionID string) string {
 func UserSessionsKey(userID string) string {
 	return "user_sessions:" + userID
 }
+
+func UserCheckoutKey(userID string) string {
+	return "checkout_products:" + userID
+}

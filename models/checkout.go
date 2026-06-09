@@ -2,12 +2,17 @@ package models
 
 type CheckoutRequest struct {
 	ProductID string `json:"productId"`
-	AddressID string `json:"addressId"`
+	Quantity  int    `json:"quantity"`
+	AddressID string `json:"addressId" binding:"required"`
 }
 
 type CheckoutResponse struct {
-	Product    []*Product              `json:"product,omitempty"`
-	TotalPrice float64                 `json:"totalPrice,omitempty"`
-	Cart       *CartResponse           `json:"cart,omitempty"`
+	Items      []CheckoutItemResponse  `json:"items"`
+	TotalPrice float64                 `json:"totalPrice"`
 	Address    *DefaultAddressResponse `json:"address"`
+}
+
+type CheckoutItemResponse struct {
+	Product  Product `json:"product"`
+	Quantity int     `json:"quantity"`
 }
