@@ -2,7 +2,7 @@ package checkoutcontroller
 
 import (
 	"backend/models"
-	checkoutService "backend/services/checkout_service"
+	checkoutservice "backend/services/checkout_service"
 	"backend/utils"
 	"context"
 	"net/http"
@@ -11,7 +11,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Checkout(c *gin.Context) {
+func GetCheckoutController(c *gin.Context) {
+
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
@@ -26,11 +27,15 @@ func Checkout(c *gin.Context) {
 		return
 	}
 
-	result, err := checkoutService.Checkout(ctx, req, userID, userObjId)
+	checkoutResponse, err := checkoutservice.PrepareCheckout(ctx, userID, userObjId, req)
 	if err != nil {
-		checkoutService.HandleCheckoutError(c, err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusCreated, gin.H{
+		"checkoutResponse": checkoutResponse,
+	})
 }

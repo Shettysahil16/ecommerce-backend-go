@@ -5,6 +5,7 @@ import (
 	cart "backend/controllers/cart_controller"
 	checkout "backend/controllers/checkout_controller"
 	homepage "backend/controllers/homepage_controller"
+	ordercontroller "backend/controllers/order_controller"
 	products "backend/controllers/products_controller"
 	token "backend/controllers/token_controller"
 	users "backend/controllers/users_controller"
@@ -73,7 +74,20 @@ func AuthRoutes(router *gin.Engine) {
 	checkoutapi := router.Group("/api")
 	checkoutapi.Use(middleware.AuthMiddleware())
 	{
-		checkoutapi.POST("/checkout", checkout.Checkout)
+		checkoutapi.POST("/checkout", checkout.GetCheckoutController)
+		checkoutapi.PATCH("/checkout-quantity/update/:productId", checkout.UpdateCheckoutController)
+		checkoutapi.DELETE("/checkout-quantity/delete/:productId", checkout.RemoveCheckoutProductController)
+	}
+
+	// ORDERS API
+	orderapi := router.Group("/api")
+	orderapi.Use(middleware.AuthMiddleware())
+	{
+		orderapi.POST("/create-order", ordercontroller.CreateOrder)
+		orderapi.PATCH("/admin-update-order/:orderId", ordercontroller.AdminUpdateOrder)
+		orderapi.PATCH("/user-update-order/:orderId", ordercontroller.UserUpdateOrder)
+		orderapi.GET("/get-order/:orderId", ordercontroller.GetOrder)
+		orderapi.GET("/get-all-orders", ordercontroller.GetAllOrders)
 	}
 
 }

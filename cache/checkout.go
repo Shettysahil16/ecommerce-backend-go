@@ -3,16 +3,51 @@ package cache
 import (
 	"backend/config"
 	"backend/models"
-	"encoding/json"
-	"time"
+	"context"
 )
 
-func SetCheckoutProducts(userID string, checkoutProduct *models.CheckoutResponse) error {
+func GetCheckout(ctx context.Context, userID string) (map[string]string, error) {
 
-	jsonData, err := json.Marshal(checkoutProduct)
+	data, err := config.RedisClient.HGetAll(ctx, UserCheckoutKey(userID)).Result()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return config.RedisClient.Set(config.Ctx, UserCheckoutKey(userID), jsonData, 10*time.Minute).Err()
+	return data, nil
+}
+
+func SetCheckoutItems(ctx context.Context, userID string, items []models.CheckoutItem) error {
+
+	pipe := config.RedisClient.TxPipeline()
+	pipe.Del(ctx, UserCheckoutKey(userID))
+
+	if len(items) > 0 {
+		data := make(map[string]any, len(items))
+
+		for _, item := range items {
+			data[item.ProductID] = item.Quantity
+		}
+
+		pipe.HSet(ctx, UserCheckoutKey(userID), data)
+	}
+
+	_, err := pipe.Exec(ctx)
+	return err
+}
+
+func UpdateCheckoutItem(ctx context.Context, userID string, productID string, quantity int64) error {
+	return config.RedisClient.HSet(
+		ctx,
+		UserCheckoutKey(userID),
+		productID,
+		quantity,
+	).Err()
+}
+
+func RemoveCheckoutItem(ctx context.Context, userID string, productID string) error {
+	return config.RedisClient.HDel(
+		ctx,
+		UserCheckoutKey(userID),
+		productID,
+	).Err()
 }

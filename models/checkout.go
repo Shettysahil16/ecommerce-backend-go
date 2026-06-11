@@ -16,3 +16,12 @@ type CheckoutItemResponse struct {
 	Product  Product `json:"product"`
 	Quantity int     `json:"quantity"`
 }
+
+type CheckoutItem struct {
+	ProductID string `json:"productId"`
+	Quantity  int64  `json:"quantity"`
+}
+
+type CheckoutCache struct {
+	Items []CheckoutItem `json:"items"`
+}

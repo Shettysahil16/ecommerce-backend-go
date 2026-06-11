@@ -97,7 +97,7 @@ func UploadProduct(ctx context.Context, userID string, productData *models.Produ
 	return repositories.CreateProduct(ctx, productData)
 }
 
-func GetCheckoutProduct(ctx context.Context, productID bson.ObjectID, qty int, address models.DefaultAddressResponse) (*models.CheckoutResponse, error) {
+func GetCheckoutProduct(ctx context.Context, productID bson.ObjectID, qty int) (*models.CheckoutResponse, error) {
 
 	product, err := repositories.GetProductByID(ctx, productID)
 	if err != nil {
@@ -120,7 +120,6 @@ func GetCheckoutProduct(ctx context.Context, productID bson.ObjectID, qty int, a
 	return &models.CheckoutResponse{
 		Items:      []models.CheckoutItemResponse{*products},
 		TotalPrice: product.SellingPrice * float64(qty),
-		Address:    &address,
 	}, nil
 
 }
