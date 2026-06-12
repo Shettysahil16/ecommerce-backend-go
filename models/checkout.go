@@ -3,7 +3,6 @@ package models
 type CheckoutRequest struct {
 	ProductID string `json:"productId"`
 	Quantity  int    `json:"quantity"`
-	AddressID string `json:"addressId" binding:"required"`
 }
 
 type CheckoutResponse struct {

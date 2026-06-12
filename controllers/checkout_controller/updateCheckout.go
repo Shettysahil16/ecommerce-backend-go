@@ -21,13 +21,16 @@ func UpdateCheckoutController(c *gin.Context) {
 		return
 	}
 
-	var qty int64
-	if err := c.ShouldBindJSON(&qty); err != nil {
+	var req struct {
+		Quantity int64 `json:"quantity"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err := checkoutservice.UpdateCheckoutItemService(ctx, userID, productId, qty)
+	err := checkoutservice.UpdateCheckoutItemService(ctx, userID, productId, req.Quantity)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "no product found",

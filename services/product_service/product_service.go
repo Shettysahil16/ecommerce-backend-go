@@ -96,30 +96,3 @@ func UploadProduct(ctx context.Context, userID string, productData *models.Produ
 
 	return repositories.CreateProduct(ctx, productData)
 }
-
-func GetCheckoutProduct(ctx context.Context, productID bson.ObjectID, qty int) (*models.CheckoutResponse, error) {
-
-	product, err := repositories.GetProductByID(ctx, productID)
-	if err != nil {
-		return nil, err
-	}
-
-	if qty == 0 {
-		qty = 1
-	}
-
-	if qty < 0 {
-		return nil, errors.New("quantity must be greater than 0")
-	}
-
-	products := &models.CheckoutItemResponse{
-		Product:  *product,
-		Quantity: qty,
-	}
-
-	return &models.CheckoutResponse{
-		Items:      []models.CheckoutItemResponse{*products},
-		TotalPrice: product.SellingPrice * float64(qty),
-	}, nil
-
-}

@@ -19,25 +19,11 @@ var ErrCheckoutProductsUnavailable = errors.New("some products are unavailable")
 
 func SetCheckoutItems(ctx context.Context, req models.CheckoutRequest, userID string) error {
 
-	//var response *models.CheckoutResponse
+	var checkoutItems []models.CheckoutItem
 
-	// ADDRESS (always required)
-	// addressObjId, err := bson.ObjectIDFromHex(req.AddressID)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// address, err := addressService.GetAddress(ctx, addressObjId, userObjId)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// address = a
-	// return nil
-
-	// PRODUCT OR CART
 	if req.ProductID == "" {
 
+		// CART
 		cartResp, err := cartService.GetCheckoutCartItems(ctx, userID)
 		if err != nil {
 			return err
@@ -47,10 +33,6 @@ func SetCheckoutItems(ctx context.Context, req models.CheckoutRequest, userID st
 			return ErrCartEmpty
 		}
 
-		//response = cartResp
-
-		var checkoutItems []models.CheckoutItem
-
 		for _, item := range cartResp.Items {
 			checkoutItems = append(checkoutItems, models.CheckoutItem{
 				ProductID: item.Product.ID.Hex(),
@@ -58,59 +40,41 @@ func SetCheckoutItems(ctx context.Context, req models.CheckoutRequest, userID st
 			})
 		}
 
-		err = cache.SetCheckoutItems(ctx, userID, checkoutItems)
-		if err != nil {
-			return err
-		}
-
 	} else {
 
+		// PRODUCT
 		productObjId, err := bson.ObjectIDFromHex(req.ProductID)
 		if err != nil {
 			return err
 		}
 
-		_, err = productService.GetCheckoutProduct(ctx, productObjId, req.Quantity)
+		product, err := productService.GetProductByID(ctx, productObjId)
 		if err != nil {
 			return err
 		}
 
-		//response = productResp
+		qty := req.Quantity
+		if qty <= 0 {
+			qty = 1
+		}
 
-		err = cache.SetCheckoutItems(ctx, userID, []models.CheckoutItem{
+		checkoutItems = []models.CheckoutItem{
 			{
-				ProductID: req.ProductID,
-				Quantity:  int64(req.Quantity),
+				ProductID: product.ID.Hex(),
+				Quantity:  int64(qty),
 			},
-		})
-		if err != nil {
-			return err
 		}
-
 	}
 
 	// BUILD RESPONSE
-
-	return nil
-
+	return cache.SetCheckoutItems(ctx, userID, checkoutItems)
 }
 
-func PrepareCheckout(ctx context.Context, userID string, userObjId bson.ObjectID, req models.CheckoutRequest) (*models.CheckoutResponse, error) {
+func PrepareCheckout(ctx context.Context, userID string, userObjId bson.ObjectID, addressID bson.ObjectID) (*models.CheckoutResponse, error) {
 
 	checkoutData, err := cache.GetCheckout(ctx, userID)
 	if err != nil {
 		return nil, err
-	}
-
-	if len(checkoutData) == 0 {
-		if err = SetCheckoutItems(ctx, req, userID); err != nil {
-			return nil, err
-		}
-
-		checkoutData, err = cache.GetCheckout(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	if len(checkoutData) == 0 {
@@ -153,7 +117,10 @@ func PrepareCheckout(ctx context.Context, userID string, userObjId bson.ObjectID
 
 	for _, p := range products {
 
-		qty := cartMap[p.ID.Hex()]
+		qty, ok := cartMap[p.ID.Hex()]
+		if !ok {
+			qty = 1
+		}
 
 		result = append(result, models.CheckoutItemResponse{
 			Product:  p,
@@ -164,12 +131,8 @@ func PrepareCheckout(ctx context.Context, userID string, userObjId bson.ObjectID
 	}
 
 	// ADDRESS (always required)
-	addressObjId, err := bson.ObjectIDFromHex(req.AddressID)
-	if err != nil {
-		return nil, err
-	}
 
-	address, err := addressService.GetAddress(ctx, addressObjId, userObjId)
+	address, err := addressService.GetAddress(ctx, addressID, userObjId)
 	if err != nil {
 		return nil, err
 	}

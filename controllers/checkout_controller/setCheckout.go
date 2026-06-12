@@ -1,6 +1,7 @@
 package checkoutcontroller
 
 import (
+	"backend/models"
 	checkoutservice "backend/services/checkout_service"
 	"backend/utils"
 	"context"
@@ -8,36 +9,26 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-func GetCheckoutController(c *gin.Context) {
+func SetCheckoutController(c *gin.Context) {
 
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Second)
 	defer cancel()
 
-	userID, userObjId, ok := utils.GetUser(c)
+	userID, _, ok := utils.GetUser(c)
 	if !ok {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
 	}
 
-	var req struct {
-		AddressID string `json:"addressId"`
-	}
-
+	var req models.CheckoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	addressObjId, err := bson.ObjectIDFromHex(req.AddressID)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid address id"})
-		return
-	}
-
-	checkoutResponse, err := checkoutservice.PrepareCheckout(ctx, userID, userObjId, addressObjId)
+	err := checkoutservice.SetCheckoutItems(ctx, req, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -46,6 +37,6 @@ func GetCheckoutController(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"checkoutResponse": checkoutResponse,
+		"message": "success",
 	})
 }

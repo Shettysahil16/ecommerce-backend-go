@@ -21,12 +21,6 @@ func RemoveCheckoutProductController(c *gin.Context) {
 		return
 	}
 
-	var qty int64
-	if err := c.ShouldBindJSON(&qty); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
 	err := checkoutservice.RemoveCheckoutItemService(ctx, userID, productId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{

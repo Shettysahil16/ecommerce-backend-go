@@ -74,6 +74,7 @@ func AuthRoutes(router *gin.Engine) {
 	checkoutapi := router.Group("/api")
 	checkoutapi.Use(middleware.AuthMiddleware())
 	{
+		checkoutapi.POST("/set-checkout", checkout.SetCheckoutController)
 		checkoutapi.POST("/checkout", checkout.GetCheckoutController)
 		checkoutapi.PATCH("/checkout-quantity/update/:productId", checkout.UpdateCheckoutController)
 		checkoutapi.DELETE("/checkout-quantity/delete/:productId", checkout.RemoveCheckoutProductController)
